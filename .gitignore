@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+.venv/
+env/
+venv/
+*.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Datasets
+datasets/
+*.npy
+*.csv
+*.wav
+
+*.pt
+
+# Cache
+*.log
+*.cache/
+*.pkl
+*.joblib
+
+# System files
+.DS_Store
+Thumbs.db
+
+# VSCode settings
+.vscode/
+
+.pt
+
+training/models/*.pt
+
+backend/pytorch_states/*.pt
+
+.dockerignore
+
+utils
+
+backend/__pycache__
+inference/__pycache__

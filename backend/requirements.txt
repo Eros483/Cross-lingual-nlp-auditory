@@ -1,0 +1,33 @@
+# Core
+fastapi
+uvicorn
+
+# Audio
+librosa
+soundfile
+numpy
+scipy
+
+# Whisper (for transcription)
+openai-whisper
+torch
+torchaudio
+
+# Huggingface Transformers (for XLM-R)
+transformers
+sentencepiece
+tokenizers
+
+# Scikit-learn (metrics + preprocessing)
+scikit-learn
+
+# Matplotlib (optional, for debug visualization)
+matplotlib
+
+gdown
+
+typing_extensions
+pydantic
+joblib
+python-multipart
+aiofiles

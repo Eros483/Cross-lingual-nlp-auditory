@@ -13,7 +13,6 @@ _model=None
 _mfcc_shape=(200,40)
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "pytorch_states", "audio_cnn.pt")
-torch.load(MODEL_PATH)
 
 def extract_mfcc(audio_path, n_mfcc=40, max_len=200):
     waveform, sample_rate=torchaudio.load(audio_path)
@@ -31,23 +30,23 @@ def extract_mfcc(audio_path, n_mfcc=40, max_len=200):
     mfcc=mfcc.unsqueeze(0).unsqueeze(0)
     return mfcc
 
-def load_model(mfcc_shape=(200,80)):
+def load_model(mfcc_shape=_mfcc_shape):
     global _model
     if _model is None:
-        _model=AudioCNN(n_classes=num_classes, mfcc_shape=_mfcc_shape).to(device)
-        _model.load_state_dict(torch.load(MODEL_PATH))
+        _model=AudioCNN(n_classes=num_classes, mfcc_shape=mfcc_shape).to(device)
+        state_dict=torch.load(MODEL_PATH, map_location=device)
+        _model.load_state_dict(state_dict)
         _model.eval()
-
+    return _model
 
 def predict_audio_emotion(audio_path):
     mfcc=extract_mfcc(audio_path).to(device)
     mfcc_shape = mfcc.shape[-2:] 
-    mfcc=mfcc.to(device)
 
-    load_model(mfcc_shape)
+    model=load_model(mfcc_shape)
 
     with torch.no_grad():
-        output=_model(mfcc)
+        output=model(mfcc)
         probs=torch.softmax(output, dim=1)
 
     return probs.squeeze().cpu().tolist()

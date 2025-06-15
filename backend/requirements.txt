@@ -21,13 +21,10 @@ tokenizers
 # Scikit-learn (metrics + preprocessing)
 scikit-learn
 
-# Matplotlib (optional, for debug visualization)
-matplotlib
 
 gdown
 
-typing_extensions
-pydantic
+pydantic==2.11.5
 joblib
 python-multipart
 aiofiles

@@ -7,13 +7,22 @@ import os
 device=torch.device("cuda" if torch.cuda.is_available() else 'cpu')
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "pytorch_states", "fusion_mlp_final.pt")
-torch.load(MODEL_PATH)
 
-model=FusionMLP().to(device)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-model.eval()
+_model=None
+
+def load_model():
+    global _model
+    if _model is None:
+        _model=FusionMLP().to(device)
+        state_dict = torch.load(MODEL_PATH, map_location=device)
+        _model.load_state_dict(state_dict)
+        _model.eval()
+    return _model
+
 
 def predict_fused_emotion(audio_probs, text_probs):
+
+    model=load_model()
 
     if isinstance(audio_probs, list):
         audio_probs=torch.tensor(audio_probs)

@@ -17,8 +17,6 @@ app=FastAPI()
 
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-tokenizer=XLMRobertaTokenizerFast.from_pretrained("xlm-roberta-base")
-
 emotion2id = {
     "Angry": 0,
     "Sad": 1,
@@ -37,7 +35,7 @@ async def analyze_audio(file: UploadFile = File(...)):
 
     transcript=transcribe_audio(tmp_path)
     audio_emotion=predict_audio_emotion(tmp_path)
-    text_emotion=predict_text_emotion(texts=transcript, tokenizer=tokenizer, device=device)
+    text_emotion=predict_text_emotion(texts=transcript)
     final_emotion=predict_fused_emotion(audio_probs=audio_emotion, text_probs=text_emotion)
 
     audio_pred=id2emotion[torch.argmax(torch.tensor(audio_emotion)).item()]

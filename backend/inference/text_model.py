@@ -5,8 +5,10 @@ import torch.nn.functional as F
 import os
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "pytorch_states", "xlm_roberta_emotion_augmented.pt")
-torch.load(MODEL_PATH)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+_model=None
+_tokenizer=None
 
 class EmotionClassifier(nn.Module):
     def __init__(self, dropout=0.3, num_classes=5):
@@ -22,14 +24,22 @@ class EmotionClassifier(nn.Module):
         x = self.dropout(self.norm(pooled_output))
         return self.out(x)
 
-def load_model(model_path, device):
-    model = EmotionClassifier()
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.to(device)
-    model.eval()
-    return model
+def load_model():
+    global _model
+    if _model is None:
+        _model = EmotionClassifier().to(device)
+        state_dict = torch.load(MODEL_PATH, map_location=device)
+        _model.load_state_dict(state_dict)
+        _model.eval()
+    return _model
 
-def prepare_inputs(texts, tokenizer, device, max_length=512):
+def load_tokenzier():
+    global _tokenizer
+    if _tokenizer is None:
+        _tokenizer = XLMRobertaTokenizerFast.from_pretrained("xlm-roberta-base")
+    return _tokenizer
+
+def prepare_inputs(texts, tokenizer, max_length=512):
     encodings=tokenizer(
         texts,
         return_tensors="pt",
@@ -41,11 +51,13 @@ def prepare_inputs(texts, tokenizer, device, max_length=512):
     attention_mask=encodings['attention_mask'].to(device)
     return input_ids, attention_mask
 
-def predict_text_emotion(texts, tokenizer, device):
-    model=load_model(model_path=MODEL_PATH, device=device)
-    model.eval()
-    input_ids, attention_mask = prepare_inputs(texts, tokenizer, device)
+def predict_text_emotion(texts):
+    tokenizer=load_tokenzier()
+    model=load_model()
+    
+    input_ids, attention_mask = prepare_inputs(texts, tokenizer)
     with torch.no_grad():
         outputs=model(input_ids, attention_mask)
         probs=F.softmax(outputs, dim=1)
+
     return probs.cpu().tolist()

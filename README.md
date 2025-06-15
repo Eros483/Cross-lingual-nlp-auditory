@@ -1,4 +1,6 @@
 # 🎧 Multi-Lingual Audio-Based Sentiment Detection
+Takes audio input in 5 supported languages, and returns sentiment and emotions encaptured.
+---
 
 **Languages Supported:** English, French, German, Italian, Español  
 **Modalities:** Audio (MFCC via CNN) + Text (XLM-RoBERTa) + Fusion (MLP on logits)
@@ -85,7 +87,7 @@ AUDIO-NLP/
 ### 6. Deployment
 - Dockerized backend ready (see `Dockerfile`)
 - GPU optimized
-- Frontend optional (basic Streamlit prototype exists)
+- Streamlit frontend prototyped
 
 ---
 

@@ -9,8 +9,6 @@ RUN apt-get update && \
     apt-get install -y libsndfile1 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install openai-whisper
-
 COPY requirements.txt .
 COPY wheels /wheels
 RUN pip install --no-index --find-links=/wheels -r requirements.txt

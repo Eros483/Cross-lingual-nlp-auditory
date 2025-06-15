@@ -53,7 +53,7 @@ AUDIO-NLP/
 
 ---
 
-## ✅ Stepwise Plan
+## ✅ Pipeline
 
 ### 1. Dataset Preparation
 - **TESS**: Preprocess audio clips to MFCC → `processed_audio/`

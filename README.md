@@ -1,97 +1,80 @@
-# 🎧 Multi-Lingual Audio-Based Sentiment Detection
-Takes audio input in 5 supported languages, and returns sentiment and emotions encaptured.
----
+# Multi-Lingual Multi-Modal Sentiment Analysis
+Pipeline to determine sentiment via audio input.
 
-**Languages Supported:** English, French, German, Italian, Español  
-**Modalities:** Audio (MFCC via CNN) + Text (XLM-RoBERTa) + Fusion (MLP on logits)
+Supports English, French, German, Italian and Español.
 
----
-
-## 🗂️ Directory Structure
-
+## Usage Instructions
+Pipeline was encapsulated with a FastAPI backend, and a streamlit frontend, and converted to a Docker Image for ease of use.
+Follow the below instructions to use the app, via Docker:
 ```
-AUDIO-NLP/
-├── backend/
-│   ├── inference/
-│   │   └── models/
-│   │       ├── __init__.py
-│   │       ├── audio_cnn.py
-│   │       ├── fusion_mlp_model.py
-│   ├── pytorch_states/
-│   ├── __init__.py
-│   ├── audio_model.py
-│   ├── fusion_model.py
-│   ├── text_model.py
-│   ├── whisper_utils.py
-│   ├── wheels/
-│   ├── app.py
-│   ├── download_models.py
-│   └── requirements.txt
-├── datasets/
-│   ├── fusion/
-│   ├── processed_audio/
-│   ├── processed_text/
-│   ├── ravdess/
-│   ├── tess_audio/
-│   ├── ravdess_dataset_download.ipynb
-│   └── textualData.csv
-├── frontend/
-│   ├── app.py
-│   └── requirements.txt
-├── training/
-│   ├── models/
-│   ├── data_preparation.ipynb
-│   ├── train_audio_cnn.ipynb
-│   ├── train_fusion.ipynb
-│   └── train_text_emotion.ipynb
-├── utils/
-├── .gitignore
-├── Dockerfile
-├── README.md
-└── requirements.txt
+docker pull eros483/audio_nlp:latest
+docker run -it --rm eros483/audio_nlp:latest
+``` 
+## Personal Usage Setup Instructions
+```
+git clone https://github.com/Eros483/Cross-lingual-nlp-auditory.git
+cd Cross-lingual-nlp-auditory
+conda env create -f environment.yml
+conda activate emotion-detection
 ```
 
----
+## Working Explaination
+### Overview
+1. Receives audio input via streamlit interface (user can upload an audio file, or speak into provided microphone).
+2. The audio is converted into text via `openai-whisper`.
+3. Both Audio and Text are analyzed for sentiment detection.
+4. Both predictions are then combined.
 
-## ✅ Pipeline
+### Data Processing (`training/data_preparation.ipynb`)
+1. Audio Dataset was pulled from Kaggle's [Ravdess Dataset](https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio).
+2. Text Dataset was pulled from [Kaggle](https://www.kaggle.com/datasets/suraj520/multi-task-learning/data) as well.
+3. Classified the 5 primary sentiments, Angry, Sad, Neutral, Suprised and Happy into a unified format in both datasets.
+### Text Dataset
+1. Observed imbalance in dataset, particularly with respect to `sad` values, thus augmented the data with `nlpaug`.
+2. Used `xlm-roberta-base` to tokenize textual data, and saved them as pytorch states.
+### Audio Dataset
+1. Loaded files using `librosa` and extracted `mfccs`.
+    - mfccs capture audio data in a manner that mimics human perception of audio frequencies.
+2. As variable audio files were present, padded, or truncated the mfccs to a standard shape of (_, 200, 40) and saved as numpy states.
+ - Note: Should have standardised usage of torch or numpy states. Causes future conflict.
 
-### 1. Dataset Preparation
-- **TESS**: Preprocess audio clips to MFCC → `processed_audio/`
-- **Kaggle Multilingual Dataset**: Clean multilingual text → `processed_text/`
-- Align emotion labels for audio/text fusion  
-- Create validation splits
+### Audio Model Training (`training/train_audio_cnn.ipynb`)
+1. Applied Train, test split.
+2. Wrapped in torch's Data Loader class.
+3. Created a basic 2-layer convolutional neural network.
+4. Trained over 20 epochs.
+5. Obtained a high 93% accuracy.
+6. Saved model as pytorch state.
+7. Saved ground truth labels, predicted labels, and audio prediction probabilities in preparation for fusion.
 
-### 2. Audio Emotion Model
-- Train CNN on MFCC features  
-- Notebook: `train_audio_cnn.ipynb`  
-- Save model as `audio_cnn.pt`
+### Text Model Training (`training/train_text_emotion.ipynb`)
+1. Loaded tokenized data.
+2. Mapped labels, and wrapped data in Data Loader class.
+3. Trained `XLM-Roberta-Base`, adding a custom head, which applied additional Drop out and layer normalization to improve model performance.
+4. Considered `label smoothening loss` and `cross entropy loss` in attempts to improve accuracy, ultimately went with cross entropy loss.
+5. Received overall low accuracy of 83%.
+    - Key problem was poor performance in `Sad` prediction.
+    - Futute note: Handle class imbalances in a improved manner/use different dataset.
+6. Saved softmax probabilities and predicted emotion class indices as pytorch dataset.
 
-### 3. Text Emotion Model
-- Fine-tune XLM-RoBERTa  
-- Notebook: `train_text_emotion.ipynb`  
-- Save model as `text_emotion_model.pt`
+### Fusion Model Training (`training/train_fusion.ipynb`)
+1. Loaded all previous saved probabilities.
+    - Forced to slice text probabilities to a shape of [173,5] to match audio dataset.
+    - Likely impacted fusion prediction accuracy.
+2. Concatenated audio probabilities and text probabilties with 5+5 distribution.
+3. Defined a small fully connected MLP with:
+    - input_dim = 10
+    - hidden layer = 32
+    - output = 5 classes
+    - Applied dropout after ReLU to regularize.
+4. Trained over 20 epochs.
+    - Low accuracy of 63%.
+    - Reasons likely due to factors considered above while training text dataset, and creating the fusion dataset.
+    - Additionally, very small dataset created by fusion, likely further impacted prediction capabilities.
 
-### 4. Fusion Model
-- Use predictions from audio and text models  
-- Train MLP on combined outputs  
-- Notebook: `train_fusion.ipynb`  
-- Save as `fusion_model.pkl`
+### FastAPI backend and Streamlit frontend
+Created API layer for request calls in `backend/app.py`, and connected to streamlit frontend in `frontend/app.py`.
 
-### 5. Backend Setup
-- Whisper → transcript
-- Run XLM-R for text emotion
-- Run CNN for audio emotion
-- Combine using fusion model
-- FastAPI endpoint: `/analyze/`
 
-### 6. Deployment
-- Dockerized backend ready (see `Dockerfile`)
-- GPU optimized
-- Streamlit frontend prototyped
 
----
 
-## ⚠️ Notes
-- Emotion classes across datasets are aligned (manually).
-- No joint audio-text data → fusion is trained on separate dataset predictions.
-- Consider collecting paired audio+text later for supervised multimodal learning.

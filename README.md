@@ -18,6 +18,28 @@ conda env create -f environment.yml
 conda activate emotion-detection
 ```
 
+## Directory Overview
+```
+Cross-lingual-nlp-auditory
+├───backend
+│   ├───inference
+│   │   ├───models
+│   │   │   └───__pycache__
+│   │   ├───pytorch_states
+│   │   └───__pycache__
+│   ├───wheels
+│   └───__pycache__
+├───datasets
+│   ├───fusion
+│   ├───processed_audio
+│   ├───processed_text
+│   ├───ravdess
+├───frontend
+├───training
+│   └───models
+└───utils
+```
+
 ## Working Explaination
 ### Overview
 1. Receives audio input via streamlit interface (user can upload an audio file, or speak into provided microphone).
